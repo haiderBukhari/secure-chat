@@ -28,6 +28,8 @@ ENV/
 certs/*.key
 certs/*.crt
 certs/*.pem
+certs/*.backup
+certs/fake/
 
 # Transcripts and Logs
 transcripts/
