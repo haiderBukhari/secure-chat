@@ -3,3 +3,7 @@ PyMySQL
 python-dotenv
 pydantic
 rich
+mysql
+mysql-connector-python
+cryptography
+mysql.connector

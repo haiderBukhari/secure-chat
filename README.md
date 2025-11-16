@@ -1,111 +1,87 @@
+# SecureChat - Secure Chat System
 
-# SecureChat – Assignment #2 (CS-3002 Information Security, Fall 2025)
+**Course**: CS-3002 Information Security, Fall 2025  
+**Assignment**: #2  
+**Institution**: FAST-NUCES
 
-This repository is the **official code skeleton** for your Assignment #2.  
-You will build a **console-based, PKI-enabled Secure Chat System** in **Python**, demonstrating how cryptographic primitives combine to achieve:
+## 📖 Complete Documentation
 
-**Confidentiality, Integrity, Authenticity, and Non-Repudiation (CIANR)**.
+**See [SETUP.md](SETUP.md) for complete setup, implementation details, and testing guide.**
 
+## ⚡ Quick Start
 
-## 🧩 Overview
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-You are provided only with the **project skeleton and file hierarchy**.  
-Each file contains docstrings and `TODO` markers describing what to implement.
+# 2. Start MySQL
+docker run -d --name securechat-db -e MYSQL_ROOT_PASSWORD=rootpass -e MYSQL_DATABASE=securechat -e MYSQL_USER=scuser -e MYSQL_PASSWORD=scpass -p 3306:3306 mysql:8
 
-Your task is to:
-- Implement the **application-layer protocol**.
-- Integrate cryptographic primitives correctly to satisfy the assignment spec.
-- Produce evidence of security properties via Wireshark, replay/tamper tests, and signed session receipts.
+# 3. Generate certificates
+python scripts/gen_ca.py --name "FAST-NU Root CA"
+python scripts/gen_cert.py --cn server.local --out certs/server
+python scripts/gen_cert.py --cn client.local --out certs/client
 
-## 🏗️ Folder Structure
+# 4. Initialize database
+python -m app.storage.db --init
+
+# 5. Verify setup
+python verify_setup.py
+
+# 6. Run application
+# Terminal 1:
+python -m app.server
+
+# Terminal 2:
+python -m app.client
+```
+
+## 📁 Project Structure
+
 ```
 securechat-skeleton/
-├─ app/
-│  ├─ client.py              # Client workflow (plain TCP, no TLS)
-│  ├─ server.py              # Server workflow (plain TCP, no TLS)
-│  ├─ crypto/
-│  │  ├─ aes.py              # AES-128(ECB)+PKCS#7 (use cryptography lib)
-│  │  ├─ dh.py               # Classic DH helpers + key derivation
-│  │  ├─ pki.py              # X.509 validation (CA signature, validity, CN)
-│  │  └─ sign.py             # RSA SHA-256 sign/verify (PKCS#1 v1.5)
-│  ├─ common/
-│  │  ├─ protocol.py         # Pydantic message models (hello/login/msg/receipt)
-│  │  └─ utils.py            # Helpers (base64, now_ms, sha256_hex)
-│  └─ storage/
-│     ├─ db.py               # MySQL user store (salted SHA-256 passwords)
-│     └─ transcript.py       # Append-only transcript + transcript hash
-├─ scripts/
-│  ├─ gen_ca.py              # Create Root CA (RSA + self-signed X.509)
-│  └─ gen_cert.py            # Issue client/server certs signed by Root CA
-├─ tests/manual/NOTES.md     # Manual testing + Wireshark evidence checklist
-├─ certs/.keep               # Local certs/keys (gitignored)
-├─ transcripts/.keep         # Session logs (gitignored)
-├─ .env.example              # Sample configuration (no secrets)
-├─ .gitignore                # Ignore secrets, binaries, logs, and certs
-├─ requirements.txt          # Minimal dependencies
-└─ .github/workflows/ci.yml  # Compile-only sanity check (no execution)
+├── app/                    # Application code
+│   ├── server.py          # Server implementation
+│   ├── client.py          # Client implementation
+│   ├── crypto/            # Cryptographic modules
+│   ├── common/            # Protocol & utilities
+│   └── storage/           # Database & transcripts
+├── scripts/               # Certificate generation
+├── certs/                 # Certificates (gitignored)
+├── transcripts/           # Session logs (gitignored)
+├── SETUP.md              # Complete documentation
+├── setup.py              # Automated setup
+├── verify_setup.py       # Setup verification
+└── collect_evidence.py   # Evidence collection
 ```
 
-## ⚙️ Setup Instructions
+## ✅ Implementation Status
 
-1. **Fork this repository** to your own GitHub account(using official nu email).  
-   All development and commits must be performed in your fork.
+- ✅ PKI Infrastructure (CA, certificates, validation)
+- ✅ Secure Registration & Login (salted SHA-256, MySQL)
+- ✅ Encrypted Communication (DH + AES-128)
+- ✅ Message Integrity (RSA signatures)
+- ✅ Replay Protection (sequence numbers)
+- ✅ Non-Repudiation (transcripts + receipts)
 
-2. **Set up environment**:
-   ```bash
-   python3 -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   cp .env.example .env
-   ```
+## 🔒 Security Properties
 
-3. **Initialize MySQL** (recommended via Docker):
-   ```bash
-   docker run -d --name securechat-db        -e MYSQL_ROOT_PASSWORD=rootpass        -e MYSQL_DATABASE=securechat        -e MYSQL_USER=scuser        -e MYSQL_PASSWORD=scpass        -p 3306:3306 mysql:8
-   ```
+- **Confidentiality**: AES-128 encryption
+- **Integrity**: SHA-256 + RSA signatures
+- **Authenticity**: Mutual certificate validation
+- **Non-Repudiation**: Signed session transcripts
 
-4. **Create tables**:
-   ```bash
-   python -m app.storage.db --init
-   ```
+## 📚 Full Documentation
 
-5. **Generate certificates** (after implementing the scripts):
-   ```bash
-   python scripts/gen_ca.py --name "FAST-NU Root CA"
-   python scripts/gen_cert.py --cn server.local --out certs/server
-   python scripts/gen_cert.py --cn client.local --out certs/client
-   ```
+For complete details including:
+- Assignment requirements
+- Implementation details
+- Testing procedures
+- Troubleshooting guide
+- Submission checklist
 
-6. **Run components** (after implementation):
-   ```bash
-   python -m app.server
-   # in another terminal:
-   python -m app.client
-   ```
+**Read [SETUP.md](SETUP.md)**
 
-## 🚫 Important Rules
+---
 
-- **Do not use TLS/SSL or any secure-channel abstraction**  
-  (e.g., `ssl`, HTTPS, WSS, OpenSSL socket wrappers).  
-  All crypto operations must occur **explicitly** at the application layer.
-
-- You are **not required** to implement AES, RSA, or DH math, Use any of the available libraries.
-- Do **not commit secrets** (certs, private keys, salts, `.env` values).
-- Your commits must reflect progressive development — at least **10 meaningful commits**.
-
-## 🧾 Deliverables
-
-When submitting on Google Classroom (GCR):
-
-1. A ZIP of your **GitHub fork** (repository).
-2. MySQL schema dump and a few sample records.
-3. Updated **README.md** explaining setup, usage, and test outputs.
-4. `RollNumber-FullName-Report-A02.docx`
-5. `RollNumber-FullName-TestReport-A02.docx`
-
-## 🧪 Test Evidence Checklist
-
-✔ Wireshark capture (encrypted payloads only)  
-✔ Invalid/self-signed cert rejected (`BAD_CERT`)  
-✔ Tamper test → signature verification fails (`SIG_FAIL`)  
-✔ Replay test → rejected by seqno (`REPLAY`)  
-✔ Non-repudiation → exported transcript + signed SessionReceipt verified offline  
+**GitHub Repository**: [Add your fork URL here]
